@@ -1,3 +1,7 @@
+*__pycache__*
+output/*
 *.ipynb_checkpoints
 *.DS_Store
 *.idea
+*.pkl
+*.jpg
