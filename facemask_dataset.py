@@ -56,7 +56,9 @@ def get_facemask_1_dicts(dataset_dir, split='train', load_pkl=True):
             note: fixed train:val:test split ratio of 0.7:0.15:0.15
     """
     if load_pkl:
-        return pickle.load(open('facemask_1_dicts.pkl', 'rb'))
+        if os.path.exists('facemask_1_dicts_{}.pkl'.format(split)):
+            return pickle.load(open('facemask_1_dicts_{}.pkl'.format(split), 'rb'))
+        # return pickle.load(open('facemask_1_dicts_{}.pkl'.format(split), 'rb'))
         
     img_dir = os.path.join(dataset_dir, "images")
     annotation_dir = os.path.join(dataset_dir, "annotations")
@@ -117,7 +119,7 @@ def get_facemask_1_dicts(dataset_dir, split='train', load_pkl=True):
             objs.append(obj)
         record["annotations"] = objs
         dataset_dicts.append(record)
-    pickle.dump(dataset_dicts, open('facemask_1_dicts.pkl', 'wb'))
+    pickle.dump(dataset_dicts, open('facemask_1_dicts_{}.pkl'.format(split), 'wb'))
     return dataset_dicts
 
 
