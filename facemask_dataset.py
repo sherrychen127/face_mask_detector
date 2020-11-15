@@ -35,8 +35,7 @@ DATASET1_CLASS_MAPPING = {
     'other': -1}
 
 def register_facemask_dataset():
-    # dataset_dir = "./datasets/dataset1/Medical_mask/Medical_mask/Medical_Mask/"
-    dataset_dir = "/home/sherry/APS360/datasets/face_mask_dataset/Medical mask/Medical mask/Medical Mask"
+    dataset_dir = "./datasets/dataset1/Medical_mask/Medical_mask/Medical_Mask/"
     for d in ["train", "val"]:
         DatasetCatalog.register("facemask_1_" + d, lambda d=d: get_facemask_1_dicts(dataset_dir, d))
         MetadataCatalog.get("facemask_1_" + d).set(thing_classes=['face_with_mask', 'face_no_mask', 'face_with_mask_incorrect', 'face_other_covering'],

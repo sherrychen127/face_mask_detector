@@ -82,7 +82,7 @@ cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold
 predictor = DefaultPredictor(cfg)
 
 facemask_1_metadata = MetadataCatalog.get("facemask_1_val")
-dataset_dicts = get_facemask_1_dicts("/home/sherry/APS360/datasets/face_mask_dataset/Medical mask/Medical mask/Medical Mask", split='val')
+dataset_dicts = get_facemask_1_dicts("./dataset1/Medical mask/Medical mask/Medical Mask", split='val')
 
 #randomly select 5 images to visualize
 for d in random.sample(dataset_dicts, 5):    
