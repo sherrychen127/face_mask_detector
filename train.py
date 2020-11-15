@@ -21,7 +21,6 @@ from facemask_dataset import register_facemask_dataset, get_facemask_1_dicts
 
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '2'
-
 facemask_1_metadata, dataset_dicts = register_facemask_dataset()
 
 # facemask_1_metadata = MetadataCatalog.get("facemask_1_train")
