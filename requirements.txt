@@ -1,9 +1,11 @@
 cython
 cffi
-opencv-python
 scipy
 msgpack
 easydict
-matplotlib
 pyyaml
 tensorboardX
+numpy>=1.16.1
+opencv-python>=4.4
+matplotlib>=3.1.3
+imageio>=2.9.0
