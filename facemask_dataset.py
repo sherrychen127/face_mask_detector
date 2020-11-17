@@ -34,14 +34,14 @@ DATASET1_CLASS_MAPPING = {
     'hood': -1,
     'other': -1}
 
-def register_facemask_dataset():
-    dataset_dir = "./datasets/dataset1/Medical_mask/Medical_mask/Medical_Mask/"
+def register_facemask_dataset(split='train'):
+    dataset_dir = "./datasets/dataset1/Medical mask/Medical mask/Medical Mask/"
     for d in ["train", "val"]:
         DatasetCatalog.register("facemask_1_" + d, lambda d=d: get_facemask_1_dicts(dataset_dir, d))
         MetadataCatalog.get("facemask_1_" + d).set(thing_classes=['face_with_mask', 'face_no_mask', 'face_with_mask_incorrect', 'face_other_covering'],
                                               evaluator_type="coco")
     facemask_1_metadata = MetadataCatalog.get("facemask_1_train")
-    dataset_dicts = get_facemask_1_dicts(dataset_dir, "train")
+    dataset_dicts = get_facemask_1_dicts(dataset_dir, split)
     return facemask_1_metadata, dataset_dicts
 
 
@@ -102,7 +102,11 @@ def get_facemask_1_dicts(dataset_dir, split='train', load_pkl=True):
         record["image_id"] = idx
         record["height"] = height
         record["width"] = width
-        
+        # print(annotations)
+        # if annotations[0]["BoundingBox"] == []:
+        #     print(annotations)
+        #     continue
+
         objs = []
         for annot in annotations:
             classname = annot["classname"]

@@ -4,13 +4,12 @@ import os, json, cv2, random
 import detectron2
 from detectron2.utils.logger import setup_logger
 from detectron2 import model_zoo
-from detectron2.engine import DefaultPredictor
+from detectron2.engine import DefaultPredictor, DefaultTrainer
 from detectron2.config import get_cfg
-from detectron2.utils.visualizer import Visualizer, _create_text_labels
-from detectron2.data import MetadataCatalog, DatasetCatalog
+from detectron2.utils.visualizer import Visualizer, _create_text_labels, ColorMode
+from detectron2.data import MetadataCatalog, DatasetCatalog, build_detection_test_loader
+from detectron2.evaluation import COCOEvaluator, inference_on_dataset
 import matplotlib.pyplot as plt
-from detectron2.engine import DefaultTrainer
-from detectron2.utils.visualizer import ColorMode
 from facemask_dataset import register_facemask_dataset, get_facemask_1_dicts
 
 from train import parse_args, modify_cfg
@@ -81,8 +80,34 @@ cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to t
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold
 predictor = DefaultPredictor(cfg)
 
-facemask_1_metadata = MetadataCatalog.get("facemask_1_val")
-dataset_dicts = get_facemask_1_dicts("./dataset1/Medical mask/Medical mask/Medical Mask", split='val')
+# facemask_1_metadata = MetadataCatalog.get("facemask_1_val")
+facemask_1_metadata, dataset_dicts = register_facemask_dataset(split='val')
+
+# evaluator = COCOEvaluator("facemask_1_val", ("bbox", "segm"), False, output_dir="./output/")
+# val_loader = build_detection_test_loader(cfg, "facemask_1_val")
+# print(inference_on_dataset(predictor, val_loader, evaluator))
+# # another equivalent way to evaluate the model is to use `trainer.test`
+
+correct = 0
+total = 0
+count = 0
+for d in dataset_dicts:
+    if count % 100 == 0:
+        print(count, '/', len(dataset_dicts))
+    count += 1
+    im = cv2.imread(d["file_name"])
+    outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+    # print(outputs["instances"].pred_classes.detach().cpu().numpy())
+    # print([dict['category_id'] for dict in d["annotations"]])   
+    pred = np.array(outputs["instances"].pred_classes.detach().cpu().numpy())
+    ground_truth = np.array([dict['category_id'] for dict in d["annotations"]])
+    
+    ml = min(len(pred), len(ground_truth))
+    diff = pred[:ml] - ground_truth[:ml]
+    correct += len(ground_truth) - len(np.where(diff>0)[0])
+    total += len(ground_truth)
+print(correct, total)
+print('total class accuracy: ', correct/total)
 
 #randomly select 5 images to visualize
 for d in random.sample(dataset_dicts, 5):    
