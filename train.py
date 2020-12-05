@@ -13,7 +13,7 @@ from facemask_dataset import register_facemask_dataset, get_facemask_1_dicts
 from detectron2.engine.hooks import HookBase
 from detectron2.evaluation import inference_context
 from detectron2.utils.logger import log_every_n_seconds
-from detectron2.data import DatasetMapper, build_detection_test_loader
+from detectron2.data import DatasetMapper, build_detection_test_loader, build_detection_train_loader
 import detectron2.utils.comm as comm
 import torch
 import time
@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument('--plot_only', action='store_true')
     parser.add_argument('--max_iter', type=int, default=2000)
     args = parser.parse_args()
-    os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
     return args
 
 
@@ -120,14 +120,15 @@ def modify_cfg(args, cfg_filepath = "COCO-Detection/faster_rcnn_R_50_FPN_1x.yaml
     cfg.DATASETS.TEST = ("facemask_1_val",)
     cfg.DATALOADER.NUM_WORKERS = 2
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(cfg_filepath)  # Let training initialize from model zoo
-    cfg.SOLVER.IMS_PER_BATCH = 2
-    cfg.SOLVER.BASE_LR = 0.00025  # pick a good LR
+    cfg.SOLVER.IMS_PER_BATCH = 4
+    cfg.SOLVER.BASE_LR = 0.0025  # pick a good LR
     cfg.SOLVER.MAX_ITER = args.max_iter    # 300 iterations seems good enough for this toy dataset; you will need to train longer for a practical dataset
-    cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128   # faster, and good enough for this toy dataset (default: 512)
-    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 3  # (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
+    cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 512   # faster, and good enough for this toy dataset (default: 512)
+    cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2  # (see https://detectron2.readthedocs.io/tutorials/datasets.html#update-the-config-for-new-datasets)
     cfg.OUTPUT_DIR = args.output
 
-    cfg.TEST.EVAL_PERIOD = 200
+    cfg.TEST.EVAL_PERIOD = cfg.SOLVER.MAX_ITER//5
+    #cfg.TEST.EVAL_PERIOD = 200
     return cfg
 
 
@@ -157,14 +158,47 @@ def train_model(args, cfg):
     trainer.train()
 
 
+def visualize_augmentation(cfg):
+    facemask_1_metadata, dataset1_dicts = register_facemask_dataset(split='train')
+
+    m_dataloader = build_detection_train_loader(cfg, DatasetMapper(cfg,True))
+    for d in m_dataloader:
+        print(d[0])
+        train_image = d[0]
+        img_np = train_image['image'].numpy()
+        img_np = np.transpose(img_np, (1,2,0))
+        print(img_np.shape)
+        visualizer = Visualizer(img_np[:,:,::-1], metadata=facemask_1_metadata,scale=1)
+        gt_image = visualizer.overlay_instances(
+                        boxes=train_image["instances"].gt_boxes,
+                        #masks=train_image["instances"].gt_masks,
+                        labels=train_image["instances"].gt_classes)
+
+        original_img = cv2.imread(train_image['file_name'])
+        print(original_img.shape)
+
+        plt.figure(figsize=(7, 7))
+        plt.imshow(cv2.cvtColor(original_img, cv2.COLOR_BGR2RGB))
+        plt.show()
+        plt.imshow(gt_image.get_image())
+        plt.show()
+        break
+
+
+
 if __name__=='__main__':
     args = parse_args()
-    # _, _ = register_facemask_dataset()
-    _, _ = register_facemask_dataset(split='val')
-    
+    _, _ = register_facemask_dataset()
+
+    #os.environ["CUDA_VISIBLE_DEVICES"]=str(args.gpu)
+
     cfg = modify_cfg(args)
+
+    #visualize_augmentation(cfg)
+
     if args.plot_only:
         plot_loss(cfg)
     else:
         os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
         train_model(args, cfg)
+        plot_loss(cfg)

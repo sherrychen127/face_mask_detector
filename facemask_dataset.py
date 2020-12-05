@@ -47,7 +47,8 @@ def register_facemask_dataset(split='train'):
         DatasetCatalog.register("facemask_1_" + d, lambda d=d: get_facemask_1_dicts(dataset_dir, d))
         MetadataCatalog.get("facemask_1_" + d).set(thing_classes=['face_with_mask', 'face_no_mask'],
                                               evaluator_type="coco")
-    facemask_1_metadata = MetadataCatalog.get("facemask_1_train")
+    #facemask_1_metadata = MetadataCatalog.get("facemask_1_train")
+    facemask_1_metadata = MetadataCatalog.get("facemask_1_" + split)
     dataset_dicts = get_facemask_1_dicts(dataset_dir, split)
     return facemask_1_metadata, dataset_dicts
 
@@ -135,7 +136,7 @@ def get_facemask_1_dicts(dataset_dir, split='train', load_pkl=True):
     return dataset_dicts
 
 
-def get_facemask_2_dicts(dataset_dir):
+def get_facemask_2_dicts(dataset_dir, load_pkl=True):
     """
     Return a list of dictionaries containing the dataset2's annotations,
     used as test set.
@@ -146,6 +147,10 @@ def get_facemask_2_dicts(dataset_dir):
     Return:
         dataset_dicts (list): a list of dictionaries
     """
+    if load_pkl:
+        if os.path.exists('facemask_2_dicts_test.pkl'):
+            return pickle.load(open('facemask_2_dicts_test.pkl', 'rb'))
+
     img_dir = os.path.join(dataset_dir, "images")
     annotation_dir = os.path.join(dataset_dir, "annotations")
     annot_file_path_list = []
@@ -187,6 +192,7 @@ def get_facemask_2_dicts(dataset_dir):
             objs.append(obj)
         record["annotations"] = objs
         dataset_dicts.append(record)
+    pickle.dump(dataset_dicts, open('facemask_2_dicts_test.pkl', 'wb'))
     return dataset_dicts
 
 
