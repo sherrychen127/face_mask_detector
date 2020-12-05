@@ -74,55 +74,90 @@ class newVisualizer(Visualizer):
         return self.output
 
 
-args = parse_args()
-cfg = modify_cfg(args) #use the same config as training
-cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
-cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold
-predictor = DefaultPredictor(cfg)
+# args = parse_args()
+# cfg = modify_cfg(args) #use the same config as training
+# cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")  # path to the model we just trained
+# cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7   # set a custom testing threshold
+# predictor = DefaultPredictor(cfg)
 
-# facemask_1_metadata = MetadataCatalog.get("facemask_1_val")
-facemask_1_metadata, dataset_dicts = register_facemask_dataset(split='val')
+# # facemask_1_metadata = MetadataCatalog.get("facemask_1_val")
+# facemask_1_metadata, dataset_dicts = register_facemask_dataset(split='val')
 
-# evaluator = COCOEvaluator("facemask_1_val", ("bbox", "segm"), False, output_dir="./output/")
-# val_loader = build_detection_test_loader(cfg, "facemask_1_val")
-# print(inference_on_dataset(predictor, val_loader, evaluator))
-# # another equivalent way to evaluate the model is to use `trainer.test`
+# # evaluator = COCOEvaluator("facemask_1_val", ("bbox", "segm"), False, output_dir="./output/")
+# # val_loader = build_detection_test_loader(cfg, "facemask_1_val")
+# # print(inference_on_dataset(predictor, val_loader, evaluator))
+# # # another equivalent way to evaluate the model is to use `trainer.test`
 
-correct = 0
-total = 0
-count = 0
-for d in dataset_dicts:
-    if count % 100 == 0:
-        print(count, '/', len(dataset_dicts))
-    count += 1
-    im = cv2.imread(d["file_name"])
-    outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
-    # print(outputs["instances"].pred_classes.detach().cpu().numpy())
-    # print([dict['category_id'] for dict in d["annotations"]])   
-    pred = np.array(outputs["instances"].pred_classes.detach().cpu().numpy())
-    ground_truth = np.array([dict['category_id'] for dict in d["annotations"]])
+
+
+# def get_iou(pred_box, gt_box):
+#     """
+#     pred_box : the coordinate for predict bounding box
+#     gt_box :   the coordinate for ground truth bounding box
+#     return :   the iou score
+#     the  left-down coordinate of  pred_box:(pred_box[0], pred_box[1])
+#     the  right-up coordinate of  pred_box:(pred_box[2], pred_box[3])
+#     """
+#     # 1.get the coordinate of inters
+#     ixmin = max(pred_box[0], gt_box[0])
+#     ixmax = min(pred_box[2], gt_box[2])
+#     iymin = max(pred_box[1], gt_box[1])
+#     iymax = min(pred_box[3], gt_box[3])
+
+#     iw = np.maximum(ixmax-ixmin+1., 0.)
+#     ih = np.maximum(iymax-iymin+1., 0.)
+
+#     # 2. calculate the area of inters
+#     inters = iw*ih
+
+#     # 3. calculate the area of union
+#     uni = ((pred_box[2]-pred_box[0]+1.) * (pred_box[3]-pred_box[1]+1.) +
+#            (gt_box[2] - gt_box[0] + 1.) * (gt_box[3] - gt_box[1] + 1.) -
+#            inters)
+
+#     # 4. calculate the overlaps between pred_box and gt_box
+#     iou = inters / uni
+
+#     return iou
+
+# correct = 0
+# total = 0
+# count = 0
+# for d in dataset_dicts:
+#     if count % 100 == 0:
+#         print(count, '/', len(dataset_dicts))
+#     count += 1
+#     im = cv2.imread(d["file_name"])
+#     outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+#     # print(outputs["instances"].pred_classes.detach().cpu().numpy())
+#     # print([dict['category_id'] for dict in d["annotations"]])   
+#     pred = np.array(outputs["instances"].pred_classes.detach().cpu().numpy())
+#     ground_truth = np.array([dict['category_id'] for dict in d["annotations"]])
     
-    ml = min(len(pred), len(ground_truth))
-    diff = pred[:ml] - ground_truth[:ml]
-    correct += len(ground_truth) - len(np.where(diff>0)[0])
-    total += len(ground_truth)
-print(correct, total)
-print('total class accuracy: ', correct/total)
+#     ml = min(len(pred), len(ground_truth))
+#     diff = pred[:ml] - ground_truth[:ml]
+#     correct += len(ground_truth) - len(np.where(diff>0)[0])
+#     total += len(ground_truth)
+#     print(outputs["instances"].pred_boxes)
+#     print(dict)
 
-#randomly select 5 images to visualize
-for d in random.sample(dataset_dicts, 5):    
-    im = cv2.imread(d["file_name"])
-    import time
-    start = time.time()
-    outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
-    print('used', time.time() - start, 'sec')
-    v = newVisualizer(im[:, :, ::-1],
-                   metadata=facemask_1_metadata, 
-                   scale=0.5, 
-                   instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
-    )
-    out = v.new_draw_instance_predictions(outputs["instances"].to("cpu"))
-    # cv2_imshow(out.get_image()[:, :, ::-1])
-    print(out)
-    plt.imshow(out.get_image()[:, :, ::-1])
-    plt.show()
+# print(correct, total)
+# print('total class accuracy: ', correct/total)
+
+# # #randomly select 5 images to visualize
+# # for d in random.sample(dataset_dicts, 5):    
+# #     im = cv2.imread(d["file_name"])
+# #     import time
+# #     start = time.time()
+# #     outputs = predictor(im)  # format is documented at https://detectron2.readthedocs.io/tutorials/models.html#model-output-format
+# #     print('used', time.time() - start, 'sec')
+# #     v = newVisualizer(im[:, :, ::-1],
+# #                    metadata=facemask_1_metadata, 
+# #                    scale=0.5, 
+# #                    instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels. This option is only available for segmentation models
+# #     )
+# #     out = v.new_draw_instance_predictions(outputs["instances"].to("cpu"))
+# #     # cv2_imshow(out.get_image()[:, :, ::-1])
+# #     print(out)
+# #     plt.imshow(out.get_image()[:, :, ::-1])
+# #     plt.show()

@@ -31,7 +31,7 @@ def parse_args():
     parser.add_argument('--plot_only', action='store_true')
     parser.add_argument('--max_iter', type=int, default=2000)
     args = parser.parse_args()
-    os.environ['CUDA_VISIBLE_DEVICES'] = '2'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
     return args
 
 

@@ -5,3 +5,5 @@ output/*
 *.idea
 *.pkl
 *.jpg
+ground_truth/*
+prediction/*
