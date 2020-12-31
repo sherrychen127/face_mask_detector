@@ -1,4 +1,5 @@
 # face_mask_detector
+Real-time (~14 fps) face mask detector which accurately identifies bounding boxes of faces and labels whether a mask is worn (correctly) or not worn using a Faster-RCNN (with FPN backbone) architecture. Achieves 85% mAP@0.5 on the kaggle dataset: https://www.kaggle.com/wobotintelligence/face-mask-detection-dataset.
 
 ## Getting Started
 ### Environment
